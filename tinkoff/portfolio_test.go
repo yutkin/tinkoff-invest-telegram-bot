@@ -3,7 +3,7 @@ package tinkoff
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
+	"text/template"
 	"testing"
 )
 

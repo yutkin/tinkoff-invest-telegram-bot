@@ -2,16 +2,28 @@ package tinkoff
 
 import (
 	"bytes"
-	"html/template"
+	"fmt"
+	"text/template"
 )
 
-const PortfolioTemplate = "{{range $i, $v := .Payload.Positions}}" +
-	"{{inc $i}}. <b>{{.Ticker}}</b> {{.Balance}} ({{.ExpectedYield.Value}} {{.ExpectedYield.Currency}})\n" +
-	"{{end}}"
+const PortfolioTemplate = `
+{{- range $i, $v := .Payload.Positions}}
+	{{- inc $i}}. <b>{{.Ticker}}</b> {{.Balance}} ({{sign .ExpectedYield.Value}} {{.ExpectedYield.Currency}})
+{{end}}`
 
 var PortfolioFuncMap = template.FuncMap{
 	"inc": func(i int) int {
 		return i + 1
+	},
+	"sign": func(i interface{}) string {
+		switch v := i.(type) {
+		case float32, float64:
+			return fmt.Sprintf("%+.2f", v)
+		case int, int8, int32, int64:
+			return fmt.Sprintf("%+d", v)
+		default:
+			return ""
+		}
 	},
 }
 

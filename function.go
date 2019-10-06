@@ -2,7 +2,7 @@ package tinkoff_investments_telegram_bot
 
 import (
 	"encoding/json"
-	"html/template"
+	"text/template"
 	"log"
 	"net/http"
 	"os"
