@@ -14,7 +14,7 @@ Telegram бот для получения портфеля в "Тинькофф 
 3. Узнаём свой Telegram ID, например, через [@userinfobot](https://t.me/userinfobot).
 
 # Деплой на Google Functions
-1. Клонируем репозиторий `git clone https://github.com/yutkin/tinkoff-investments-telegram-bot.git && cd tinkoff-investments-telegram-bot`
+1. Клонируем репозиторий `git clone https://github.com/yutkin/tinkoff-invest-telegram-bot.git && cd tinkoff-invest-telegram-bot`
 2. Собираем зависимости: `go mod vendor`
 3. Выставляем переменные среды окружения:
 ```
