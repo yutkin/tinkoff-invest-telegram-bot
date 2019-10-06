@@ -12,9 +12,14 @@ type TinkoffInvestmentsBot struct {
 	TelegramgApi *tgbotapi.BotAPI
 	TinkoffApi   *tinkoff.Api
 	OwnerId int
+	WebHookToken string
 }
 
 func (bot *TinkoffInvestmentsBot) HandleCommandMessage(update *tgbotapi.Update) {
+	if update.Message.From.ID != bot.OwnerId {
+		log.Println("Unauthorized used_id", update.Message.From.ID)
+		return
+	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 
@@ -23,7 +28,14 @@ func (bot *TinkoffInvestmentsBot) HandleCommandMessage(update *tgbotapi.Update) 
 	case "portfolio":
 		portfolio, err := bot.TinkoffApi.GetPortfolio()
 		if err == nil {
-			msg.Text = portfolio.Prettify()
+			prettyPortfolio, err := portfolio.Prettify(bot.TinkoffApi.PortfolioTemplate)
+
+			if err != nil {
+				log.Printf("Fail to prettify portfolio: %v\n", err)
+				return
+			}
+
+			msg.Text = prettyPortfolio
 			msg.ParseMode = tgbotapi.ModeHTML
 		} else {
 			msg.Text = fmt.Sprintf("%v", err)
