@@ -1,9 +1,8 @@
 package tgbot
 
 import (
-	"fmt"
 	"log"
-	"tinkoff-investments-telegram-bot/tinkoff"
+	"tinkoff-invest-telegram-bot/tinkoff"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -11,7 +10,7 @@ import (
 type TinkoffInvestmentsBot struct {
 	TelegramgApi *tgbotapi.BotAPI
 	TinkoffApi   *tinkoff.Api
-	OwnerId int
+	OwnerId      int
 	WebHookToken string
 }
 
@@ -27,19 +26,20 @@ func (bot *TinkoffInvestmentsBot) HandleCommandMessage(update *tgbotapi.Update) 
 
 	case "portfolio":
 		portfolio, err := bot.TinkoffApi.GetPortfolio()
-		if err == nil {
-			prettyPortfolio, err := portfolio.Prettify(bot.TinkoffApi.PortfolioTemplate)
-
-			if err != nil {
-				log.Printf("Fail to prettify portfolio: %v\n", err)
-				return
-			}
-
-			msg.Text = prettyPortfolio
-			msg.ParseMode = tgbotapi.ModeHTML
-		} else {
-			msg.Text = fmt.Sprintf("%v", err)
+		if err != nil {
+			log.Println("Fail to get Portfolio", err)
+			return
 		}
+
+		prettyPortfolio, err := portfolio.Prettify(bot.TinkoffApi.PortfolioTemplate, bot.TinkoffApi.CurrencyConverter)
+
+		if err != nil {
+			log.Printf("Fail to prettify portfolio: %v\n", err)
+			return
+		}
+
+		msg.Text = prettyPortfolio
+		msg.ParseMode = tgbotapi.ModeHTML
 	}
 
 	_, err := bot.TelegramgApi.Send(msg)

@@ -4,12 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"text/template"
+	"tinkoff-invest-telegram-bot/currency"
 )
 
-const PortfolioTemplate = `
+const (
+	PortfolioTemplate = `
 {{- range $i, $v := .Payload.Positions}}
-	{{- inc $i}}. <b>{{.Ticker}}</b> {{.Balance}} ({{sign .ExpectedYield.Value}} {{.ExpectedYield.Currency}})
-{{end}}`
+	{{- inc $i}}. <b>{{.Ticker}}</b> {{.Balance}} {{if ne .InstrumentType "Currency"}}шт. {{end}}({{sign .ExpectedYield.Value}} {{.ExpectedYield.Currency}})
+{{end}}
+Итог: <b>{{sign .TotalYieldRUB}}</b> RUB
+`
+)
 
 var PortfolioFuncMap = template.FuncMap{
 	"inc": func(i int) int {
@@ -43,9 +48,26 @@ type Portfolio struct {
 			Lots int32 `json:"lots"`
 		}
 	} `json:"payload"`
+
+	TotalYieldRUB float64
 }
 
-func (portfolio *Portfolio) Prettify(t *template.Template) (string, error) {
+func (portfolio *Portfolio) Prettify(t *template.Template, converter *currency.Converter) (string, error) {
+
+	for _, v := range portfolio.Payload.Positions {
+		var rate float64 = 1.0
+
+		if v.ExpectedYield.Currency != "RUB" {
+			newRate, err := converter.GetCurrencyConvertRate(v.ExpectedYield.Currency, "RUB")
+			if err != nil {
+				return "", fmt.Errorf("Fail to fetch %s to RUB exchange rate: %v", v.ExpectedYield.Currency, err)
+			}
+			rate = newRate
+		}
+
+		portfolio.TotalYieldRUB += v.ExpectedYield.Value * rate
+	}
+
 	buff := bytes.Buffer{}
 	err := t.Execute(&buff, portfolio)
 	if err != nil {

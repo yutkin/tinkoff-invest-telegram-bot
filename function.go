@@ -1,14 +1,16 @@
-package tinkoff_investments_telegram_bot
+package tinkoff_invest_telegram_bot
 
 import (
 	"encoding/json"
-	"text/template"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"tinkoff-investments-telegram-bot/tgbot"
-	"tinkoff-investments-telegram-bot/tinkoff"
+	"text/template"
+	"time"
+	"tinkoff-invest-telegram-bot/currency"
+	"tinkoff-invest-telegram-bot/tgbot"
+	"tinkoff-invest-telegram-bot/tinkoff"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -16,6 +18,8 @@ import (
 var bot = tgbot.TinkoffInvestmentsBot{}
 
 func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	telegramBotToken := os.Getenv("TELEGRAM_APITOKEN")
 	tinkofApiToken := os.Getenv("TINKOFF_APITOKEN")
 	webHookToken := os.Getenv("WEBHOOK_TOKEN")
@@ -39,12 +43,12 @@ func init() {
 	bot.WebHookToken = webHookToken
 
 	bot.TinkoffApi = &tinkoff.Api{
-		Url:    tinkoff.URL,
 		Token:  tinkofApiToken,
-		Client: &http.Client{Timeout: tinkoff.TIMEOUT},
+		Client: &http.Client{Timeout: 5 * time.Second},
 		PortfolioTemplate: template.Must(
 			template.New("Portfolio").Funcs(tinkoff.PortfolioFuncMap).Parse(tinkoff.PortfolioTemplate),
 		),
+		CurrencyConverter: currency.NewConverter(os.Getenv("CURRENCY_API_TOKEN"), 5*time.Second),
 	}
 }
 

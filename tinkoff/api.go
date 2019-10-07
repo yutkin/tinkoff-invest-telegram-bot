@@ -3,26 +3,25 @@ package tinkoff
 import (
 	"encoding/json"
 	"fmt"
-	"text/template"
 	"io/ioutil"
 	"net/http"
-	"time"
+	"text/template"
+	"tinkoff-invest-telegram-bot/currency"
 )
 
 const (
-	TIMEOUT            = time.Second * 3
-	URL                = "https://api-invest.tinkoff.ru/openapi/portfolio"
+	ApiUrl = "https://api-invest.tinkoff.ru/openapi/portfolio"
 )
 
 type Api struct {
-	Url    string
-	Token  string
-	Client *http.Client
+	Token             string
+	Client            *http.Client
 	PortfolioTemplate *template.Template
+	CurrencyConverter *currency.Converter
 }
 
 func (api *Api) GetPortfolio() (Portfolio, error) {
-	req, err := http.NewRequest("GET", api.Url, nil)
+	req, err := http.NewRequest("GET", ApiUrl, nil)
 	if err != nil {
 		return Portfolio{}, err
 	}

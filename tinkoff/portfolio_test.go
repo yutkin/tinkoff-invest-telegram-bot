@@ -3,8 +3,11 @@ package tinkoff
 import (
 	"encoding/json"
 	"fmt"
-	"text/template"
+	"os"
 	"testing"
+	"text/template"
+	"time"
+	"tinkoff-invest-telegram-bot/currency"
 )
 
 const portfolioJson = `{
@@ -112,8 +115,9 @@ func TestPortfolio_Prettify(t *testing.T) {
 	_ = json.Unmarshal([]byte(portfolioJson), &portfolio)
 
 	tpl := template.Must(template.New("Portfolio").Funcs(PortfolioFuncMap).Parse(PortfolioTemplate))
+	conv := currency.NewConverter(os.Getenv("CURRENCY_API_TOKEN"), 3*time.Second)
 
-	p, err := portfolio.Prettify(tpl)
+	p, err := portfolio.Prettify(tpl, conv)
 	if err != nil {
 		t.Errorf("Fail to prettify portfolio: %v\n", err)
 	}
