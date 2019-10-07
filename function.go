@@ -17,18 +17,27 @@ import (
 
 var bot = tgbot.TinkoffInvestmentsBot{}
 
+func getEnvOrDie(key string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		log.Fatalf("ENV var %s is not set\n")
+	}
+	return val
+}
+
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	telegramBotToken := os.Getenv("TELEGRAM_APITOKEN")
-	tinkofApiToken := os.Getenv("TINKOFF_APITOKEN")
-	webHookToken := os.Getenv("WEBHOOK_TOKEN")
-	botOwnerId_ := os.Getenv("BOT_OWNER_ID")
+	telegramBotToken := getEnvOrDie("TELEGRAM_APITOKEN")
+	tinkofApiToken := getEnvOrDie("TINKOFF_APITOKEN")
+	webHookToken := getEnvOrDie("WEBHOOK_TOKEN")
+	botOwnerId_ := getEnvOrDie("BOT_OWNER_ID")
+	currencyConvertToken := getEnvOrDie("CURRENCY_API_TOKEN")
 
 	botOwnerId, err := strconv.Atoi(botOwnerId_)
 
 	if err != nil {
-		log.Fatalf("Cannot parse bot owner ID: %s", botOwnerId_)
+		log.Fatalf("Cannot parse bot owner ID: %s\n", botOwnerId_)
 	}
 
 	api, err := tgbotapi.NewBotAPI(telegramBotToken)
@@ -36,7 +45,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Authorized on account %s", api.Self.UserName)
+	log.Printf("Authorized on account %s\n", api.Self.UserName)
 
 	bot.TelegramgApi = api
 	bot.OwnerId = botOwnerId
@@ -48,7 +57,7 @@ func init() {
 		PortfolioTemplate: template.Must(
 			template.New("Portfolio").Funcs(tinkoff.PortfolioFuncMap).Parse(tinkoff.PortfolioTemplate),
 		),
-		CurrencyConverter: currency.NewConverter(os.Getenv("CURRENCY_API_TOKEN"), 5*time.Second),
+		CurrencyConverter: currency.NewConverter(currencyConvertToken, 5*time.Second),
 	}
 }
 
