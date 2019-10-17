@@ -14,22 +14,30 @@ const portfolioJson = `{
     "payload": {
         "positions": [
             {
-                "balance": 300,
+                "averagePositionPrice": {
+                    "currency": "RUB",
+                    "value": 194.24
+                },
+                "balance": 250,
                 "expectedYield": {
                     "currency": "RUB",
-                    "value": 1314
+                    "value": 2263
                 },
                 "figi": "BBG0047315Y7",
                 "instrumentType": "Stock",
                 "isin": "RU0009029557",
-                "lots": 30,
+                "lots": 25,
                 "ticker": "SBERP"
             },
             {
+                "averagePositionPrice": {
+                    "currency": "USD",
+                    "value": 270.08
+                },
                 "balance": 4,
                 "expectedYield": {
                     "currency": "USD",
-                    "value": 14.87
+                    "value": 32.23
                 },
                 "figi": "BBG000F1ZSQ2",
                 "instrumentType": "Stock",
@@ -38,10 +46,14 @@ const portfolioJson = `{
                 "ticker": "MA"
             },
             {
+                "averagePositionPrice": {
+                    "currency": "USD",
+                    "value": 179.5
+                },
                 "balance": 3,
                 "expectedYield": {
                     "currency": "USD",
-                    "value": -10.8
+                    "value": -5.43
                 },
                 "figi": "BBG000PSKYX7",
                 "instrumentType": "Stock",
@@ -50,22 +62,30 @@ const portfolioJson = `{
                 "ticker": "V"
             },
             {
-                "balance": 200,
+                "averagePositionPrice": {
+                    "currency": "RUB",
+                    "value": 412.55
+                },
+                "balance": 130,
                 "expectedYield": {
                     "currency": "RUB",
-                    "value": -243.5
+                    "value": 2036.5
                 },
                 "figi": "BBG004S684M6",
                 "instrumentType": "Stock",
                 "isin": "RU0009062467",
-                "lots": 20,
+                "lots": 13,
                 "ticker": "SIBN"
             },
             {
+                "averagePositionPrice": {
+                    "currency": "RUB",
+                    "value": 15870
+                },
                 "balance": 3,
                 "expectedYield": {
                     "currency": "RUB",
-                    "value": 72
+                    "value": 858
                 },
                 "figi": "BBG004731489",
                 "instrumentType": "Stock",
@@ -74,22 +94,46 @@ const portfolioJson = `{
                 "ticker": "GMKN"
             },
             {
-                "balance": 55,
+                "averagePositionPrice": {
+                    "currency": "RUB",
+                    "value": 5717.5
+                },
+                "balance": 5,
                 "expectedYield": {
                     "currency": "RUB",
-                    "value": -3534.4
+                    "value": -37
+                },
+                "figi": "BBG004731032",
+                "instrumentType": "Stock",
+                "isin": "RU0009024277",
+                "lots": 5,
+                "ticker": "LKOH"
+            },
+            {
+                "averagePositionPrice": {
+                    "currency": "RUB",
+                    "value": 2160.4
+                },
+                "balance": 37,
+                "expectedYield": {
+                    "currency": "RUB",
+                    "value": -7521.2
                 },
                 "figi": "BBG006L8G4H1",
                 "instrumentType": "Stock",
                 "isin": "NL0009805522",
-                "lots": 55,
+                "lots": 37,
                 "ticker": "YNDX"
             },
             {
+                "averagePositionPrice": {
+                    "currency": "RUB",
+                    "value": 65.44
+                },
                 "balance": 0.03,
                 "expectedYield": {
                     "currency": "RUB",
-                    "value": -0.02
+                    "value": -0.04
                 },
                 "figi": "BBG0013HGFT4",
                 "instrumentType": "Currency",
@@ -99,7 +143,7 @@ const portfolioJson = `{
         ]
     },
     "status": "Ok",
-    "trackingId": "8292e84e40c6f2bd"
+    "trackingId": "b501c8e61e7e8f7d"
 }`
 
 func TestPortfolio_Unmarshalling(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 const (
 	PortfolioTemplate = `
 {{- range $i, $v := .Payload.Positions}}
-	{{- inc $i}}. <b>{{.Ticker}}</b> {{.Balance}} {{if ne .InstrumentType "Currency"}}шт. {{end}}({{sign .ExpectedYield.Value}} {{.ExpectedYield.Currency}})
+	{{- inc $i}}. <b>{{.Name}}</b> {{.Balance}} {{if ne .InstrumentType "Currency"}}шт. {{end}} {{formatFloat .TotalPositionPrice}} {{.AveragePositionPrice.Currency}} ({{sign .ExpectedYield.Value}} {{.ExpectedYield.Currency}})
 {{end}}
 Итог: <b>{{sign .TotalYieldRUB}}</b> RUB
 `
@@ -30,6 +30,14 @@ var PortfolioFuncMap = template.FuncMap{
 			return ""
 		}
 	},
+	"formatFloat": func(i interface{}) string {
+		switch v := i.(type) {
+		case float32, float64:
+			return fmt.Sprintf("%.2f", v)
+		default:
+			return ""
+		}
+	},
 }
 
 type Portfolio struct {
@@ -41,11 +49,19 @@ type Portfolio struct {
 			Ticker         string  `json:"ticker"`
 			Balance        float64 `json:"balance"`
 			InstrumentType string  `json:"instrumentType"`
-			ExpectedYield  struct {
+			Lots           int32   `json:"lots"`
+
+			ExpectedYield struct {
 				Currency string  `json:"currency"`
 				Value    float64 `json:"value"`
 			}
-			Lots int32 `json:"lots"`
+
+			AveragePositionPrice struct {
+				Currency string  `json:"currency"`
+				Value    float64 `json:"value"`
+			}
+			Name               string
+			TotalPositionPrice float64
 		}
 	} `json:"payload"`
 
@@ -54,7 +70,7 @@ type Portfolio struct {
 
 func (portfolio *Portfolio) Prettify(t *template.Template, converter *currency.Converter) (string, error) {
 
-	for _, v := range portfolio.Payload.Positions {
+	for i, v := range portfolio.Payload.Positions {
 		var rate float64 = 1.0
 
 		if v.ExpectedYield.Currency != "RUB" {
@@ -66,6 +82,7 @@ func (portfolio *Portfolio) Prettify(t *template.Template, converter *currency.C
 		}
 
 		portfolio.TotalYieldRUB += v.ExpectedYield.Value * rate
+		portfolio.Payload.Positions[i].TotalPositionPrice = v.Balance*v.AveragePositionPrice.Value + v.ExpectedYield.Value
 	}
 
 	buff := bytes.Buffer{}

@@ -20,7 +20,7 @@ var bot = tgbot.TinkoffInvestmentsBot{}
 func getEnvOrDie(key string) string {
 	val := os.Getenv(key)
 	if val == "" {
-		log.Fatalf("ENV var %s is not set\n")
+		log.Fatalf("ENV var %s is not set\n", key)
 	}
 	return val
 }

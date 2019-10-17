@@ -31,7 +31,12 @@ func (bot *TinkoffInvestmentsBot) HandleCommandMessage(update *tgbotapi.Update) 
 			return
 		}
 
+		log.Println("Trying to get ticker names...")
+		bot.TinkoffApi.FillPortfolioPositionsNames(&portfolio)
+
+		log.Println("Trying to prettify portfolio...")
 		prettyPortfolio, err := portfolio.Prettify(bot.TinkoffApi.PortfolioTemplate, bot.TinkoffApi.CurrencyConverter)
+		log.Println("Successful prettifying!")
 
 		if err != nil {
 			log.Printf("Fail to prettify portfolio: %v\n", err)
