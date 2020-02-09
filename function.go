@@ -1,4 +1,4 @@
-package tinkoff_invest_telegram_bot
+package investbot
 
 import (
 	"encoding/json"
@@ -6,27 +6,24 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"text/template"
-	"time"
-	"tinkoff-invest-telegram-bot/currency"
-	"tinkoff-invest-telegram-bot/tgbot"
-	"tinkoff-invest-telegram-bot/tinkoff"
+	"investbot/telegram"
+	"investbot/tinkoff"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-var bot = tgbot.TinkoffInvestmentsBot{}
+var bot *telegram.Bot
 
 func getEnvOrDie(key string) string {
-	val := os.Getenv(key)
-	if val == "" {
+	val, ok := os.LookupEnv(key)
+	if !ok {
 		log.Fatalf("ENV var %s is not set\n", key)
 	}
 	return val
 }
 
 func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 
 	telegramBotToken := getEnvOrDie("TELEGRAM_APITOKEN")
 	tinkofApiToken := getEnvOrDie("TINKOFF_APITOKEN")
@@ -35,29 +32,19 @@ func init() {
 	currencyConvertToken := getEnvOrDie("CURRENCY_API_TOKEN")
 
 	botOwnerId, err := strconv.Atoi(botOwnerId_)
-
 	if err != nil {
-		log.Fatalf("Cannot parse bot owner ID: %s\n", botOwnerId_)
+		log.Fatalln("Fail to parse bot owner ID:", botOwnerId_)
 	}
 
-	api, err := tgbotapi.NewBotAPI(telegramBotToken)
+	tinkoffApi := tinkoff.New(tinkofApiToken)
 
-	if err != nil {
-		panic(err)
+	if err := tinkoffApi.SetupAccounts(); err != nil {
+		log.Fatalln("Fail to setup Tinkoff accounts:", err)
 	}
-	log.Printf("Authorized on account %s\n", api.Self.UserName)
 
-	bot.TelegramgApi = api
-	bot.OwnerId = botOwnerId
-	bot.WebHookToken = webHookToken
-
-	bot.TinkoffApi = &tinkoff.Api{
-		Token:  tinkofApiToken,
-		Client: &http.Client{Timeout: 5 * time.Second},
-		PortfolioTemplate: template.Must(
-			template.New("Portfolio").Funcs(tinkoff.PortfolioFuncMap).Parse(tinkoff.PortfolioTemplate),
-		),
-		CurrencyConverter: currency.NewConverter(currencyConvertToken, 5*time.Second),
+	bot, err = telegram.New(telegramBotToken, webHookToken, currencyConvertToken, botOwnerId, tinkoffApi)
+	if err != nil {
+		log.Fatalln("Fail to create Telegram bot:", err)
 	}
 }
 
@@ -72,12 +59,14 @@ func HandleTelegramUpdate(w http.ResponseWriter, r *http.Request) {
 
 	update := tgbotapi.Update{}
 	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
-		http.Error(w, "Can't parse JSON body", http.StatusBadRequest)
+		http.Error(w, "Fail to parse JSON body", http.StatusBadRequest)
 		return
 	}
 
+	log.Printf("New update: %+v\n", update)
+
 	if update.Message != nil {
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		log.Printf("[%s] %s\n", update.Message.From.UserName, update.Message.Text)
 
 		if update.Message.IsCommand() {
 			bot.HandleCommandMessage(&update)

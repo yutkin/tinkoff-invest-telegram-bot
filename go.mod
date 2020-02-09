@@ -1,4 +1,4 @@
-module tinkoff-invest-telegram-bot
+module investbot
 
 go 1.13
 

@@ -4,9 +4,9 @@ Telegram бот для получения портфеля в "Тинькофф 
 Бот разработан под [serverless](https://ru.wikipedia.org/wiki/%D0%91%D0%B5%D1%81%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%BD%D1%8B%D0%B5_%D0%B2%D1%8B%D1%87%D0%B8%D1%81%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F) деплой на [Google Cloud Functions](https://cloud.google.com/functions/). Serverless позволяет хостить бота бесплатно (или почти бесплатно) при небольших нагрузках на backend.
 
 # Структура
-* `tgbot` - модуль с обработчиком обновлений от Telegram бота
-* `tinkoff` - модуль для работы с Tinkoff OpenAPI
-* `function.go` - точка входа для Google Functions. Инициализация глобальных переменных и обработка запросов на WebHook.  
+* `telegram` - пакет с обработчиком обновлений от Telegram бота
+* `tinkoff` - пакет для работы с Tinkoff OpenAPI
+* `function.go` - точка входа для Google Functions. Инициализация глобальных переменных и обработка запросов с WebHook-а.  
 
 # Подготовка к деплою
 1. Создаём Telegram бота и получаем для него токен. [Инструкция](https://core.telegram.org/bots#6-botfather).
@@ -39,8 +39,7 @@ gcloud functions deploy HandleTelegramUpdate \
 [Описание флагов](https://cloud.google.com/sdk/gcloud/reference/functions/deploy) для команды `gcloud functions deploy`.
 
 # Настройка Telegram Webhook
-При успешном завершении, `gcloud functions deploy` печатает результат в `YAML` формате. Нас интересует поле `httpsTrigger.url`.
-Значение `httpsTrigger.url` – endpoint нашего обработчика. Его и нужно использовать в качестве адреса WebHook. 
+При успешном завершении, `gcloud functions deploy` печатает результат в `YAML` формате. Поле `httpsTrigger.url` нужно использовать в качестве адреса WebHook. 
 
 Установка WebHook происходит через метод [setWebhook](https://core.telegram.org/bots/api#setwebhook). Пример:
 ```
@@ -48,7 +47,7 @@ http -v https://api.telegram.org/bot$TELEGRAM_APITOKEN/setWebhook \
     url="https://europe-west2-<your_project>.cloudfunctions.net/HandleTelegramUpdate?token=$WEBHOOK_TOKEN"
 ```
 
-После установки WebHook, Telegram будет отправлять все обновления от нашего бота в нашу функцию на Google Functions.
+После установки WebHook, Telegram будет отправлять все обновления от бота в функцию Google Functions.
 
 # Дополнительно
 1. [Документация к Google Functions](https://cloud.google.com/functions/docs/)

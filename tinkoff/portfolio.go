@@ -4,19 +4,26 @@ import (
 	"bytes"
 	"fmt"
 	"text/template"
-	"tinkoff-invest-telegram-bot/currency"
+	"investbot/currency"
 )
 
+const PortfolioEndpoint = "https://api-invest.tinkoff.ru/openapi/portfolio"
+
 const (
-	PortfolioTemplate = `
+	portfolioTemplateStr = `
 {{- range $i, $v := .Payload.Positions}}
-	{{- inc $i}}. <b>{{.Name}}</b> {{.Balance}} {{if ne .InstrumentType "Currency"}}шт. {{end}} {{formatFloat .TotalPositionPrice}} {{.AveragePositionPrice.Currency}} ({{sign .ExpectedYield.Value}} {{.ExpectedYield.Currency}})
+<u>{{.Name}}</u> <b>({{sign .ExpectedYield.Value}}</b> {{.ExpectedYield.Currency}})
+Баланс: {{.Balance}} {{if ne .InstrumentType "Currency"}}шт. на{{end}} {{formatFloat .TotalPositionPrice}} {{.AveragePositionPrice.Currency}}
 {{end}}
-Итог: <b>{{sign .TotalYieldRUB}}</b> RUB
+<b>Итог: {{sign .TotalYieldRUB}} RUB</b>
 `
 )
 
-var PortfolioFuncMap = template.FuncMap{
+var portfolioTemplate = template.Must(
+	template.New("Portfolio").Funcs(portfolioFuncMap).Parse(portfolioTemplateStr),
+)
+
+var portfolioFuncMap = template.FuncMap{
 	"inc": func(i int) int {
 		return i + 1
 	},
@@ -41,15 +48,19 @@ var PortfolioFuncMap = template.FuncMap{
 }
 
 type Portfolio struct {
+	TotalYieldRUB float64
+
 	TrackingID string `json:"trackingId"`
 	Status     string `json:"status"`
-	Payload    struct {
+
+	Payload struct {
 		Positions []struct {
 			Figi           string  `json:"figi"`
 			Ticker         string  `json:"ticker"`
 			Balance        float64 `json:"balance"`
 			InstrumentType string  `json:"instrumentType"`
 			Lots           int32   `json:"lots"`
+			Blocked        float64 `json:"blocked"`
 
 			ExpectedYield struct {
 				Currency string  `json:"currency"`
@@ -60,23 +71,28 @@ type Portfolio struct {
 				Currency string  `json:"currency"`
 				Value    float64 `json:"value"`
 			}
-			Name               string
+
+			AveragePositionPriceNoNkd struct {
+				Currency string  `json:"currency"`
+				Value    float64 `json:"value"`
+			}
+
+			Name               string `json:"name"`
 			TotalPositionPrice float64
 		}
 	} `json:"payload"`
-
-	TotalYieldRUB float64
 }
 
-func (portfolio *Portfolio) Prettify(t *template.Template, converter *currency.Converter) (string, error) {
+func (portfolio *Portfolio) Prettify(converter currency.Converter) (string, error) {
 
 	for i, v := range portfolio.Payload.Positions {
-		var rate float64 = 1.0
+		rate := 1.0
 
 		if v.ExpectedYield.Currency != "RUB" {
-			newRate, err := converter.GetCurrencyConvertRate(v.ExpectedYield.Currency, "RUB")
+			newRate, err := converter.ConvertRate(v.ExpectedYield.Currency, "RUB")
 			if err != nil {
-				return "", fmt.Errorf("Fail to fetch %s to RUB exchange rate: %v", v.ExpectedYield.Currency, err)
+				newErr := fmt.Errorf("fail to fetch %s to RUB exchange rate: %v", v.ExpectedYield.Currency, err)
+				return "", newErr
 			}
 			rate = newRate
 		}
@@ -86,9 +102,11 @@ func (portfolio *Portfolio) Prettify(t *template.Template, converter *currency.C
 	}
 
 	buff := bytes.Buffer{}
-	err := t.Execute(&buff, portfolio)
+
+	err := portfolioTemplate.Execute(&buff, portfolio)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("fail to execute tempalte: %v", err)
 	}
+
 	return buff.String(), nil
 }
