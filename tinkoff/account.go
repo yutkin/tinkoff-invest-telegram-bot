@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -53,7 +54,11 @@ func (api *Api) GetAccounts() (Accounts, error) {
 		return accounts, fmt.Errorf("fail to do request: %v", err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("fail to close request body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return accounts, fmt.Errorf("fail to fetch accounts. Status code: [%d]", resp.StatusCode)

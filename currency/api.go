@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
 
 const (
-	apiUrl  = "https://free.currconv.com/api/v7/convert"
-	keysTtl = 5 * time.Minute
+	apiURL  = "https://free.currconv.com/api/v7/convert"
+	keysTTL = 5 * time.Minute
 )
 
 type Converter interface {
@@ -41,12 +42,12 @@ func (converter CurrConvCom) ConvertRate(fromCurrency, toCurrency string) (float
 	var key = fromCurrency + "_" + toCurrency
 
 	if res, ok := converter.cache[key]; ok {
-		if time.Since(res.addTime) < keysTtl {
+		if time.Since(res.addTime) < keysTTL {
 			return res.value, nil
 		}
 	}
 
-	req, err := http.NewRequest("GET", apiUrl, nil)
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return 1.0, fmt.Errorf("fail to create request: %v", err)
 	}
@@ -62,7 +63,11 @@ func (converter CurrConvCom) ConvertRate(fromCurrency, toCurrency string) (float
 		return 1.0, fmt.Errorf("fail to do request: %v", err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("fail to close request body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return 1.0, fmt.Errorf("request failed: %v", err)

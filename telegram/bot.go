@@ -29,8 +29,8 @@ func New(telegramBotToken, webHookToken, currencyConvertToken string, botOwnerId
 	bot := &Bot{
 		tinkoffApi:        tinkoffApi,
 		ownerId:           botOwnerId,
-		WebHookToken:      webHookToken,
 		currencyConverter: currency.New(currencyConvertToken, 5*time.Second),
+		WebHookToken:      webHookToken,
 	}
 
 	var err error
@@ -39,7 +39,7 @@ func New(telegramBotToken, webHookToken, currencyConvertToken string, botOwnerId
 		return nil, err
 	}
 
-	log.Println("Authorized on account", bot.telegramApi.Self.UserName)
+	log.Println("Successfully authorization for account", bot.telegramApi.Self.UserName)
 
 	return bot, nil
 }
@@ -83,7 +83,7 @@ func (bot *Bot) HandleCommandMessage(update *tgbotapi.Update) {
 		}
 
 	case "iis":
-		portfolio, err := bot.tinkoffApi.GetIisPortfolio()
+		portfolio, err := bot.tinkoffApi.GetIISPortfolio()
 		if err != nil {
 			log.Println("Fail to fetch portfolio:", err)
 			return

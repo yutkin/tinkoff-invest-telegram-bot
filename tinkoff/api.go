@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -14,10 +15,10 @@ type Api struct {
 	accounts   Accounts
 }
 
-func New(tinkoffApiToken string) *Api {
+func New(tinkoffAPIToken string) *Api {
 	api := Api{
-		token:      tinkoffApiToken,
-		httpClient: &http.Client{Timeout: 5 * time.Second},
+		token:      tinkoffAPIToken,
+		httpClient: &http.Client{Timeout: 3 * time.Second},
 	}
 
 	return &api
@@ -47,7 +48,11 @@ func (api *Api) getPortfolio(accountId string) (Portfolio, error) {
 		return portfolio, fmt.Errorf("fail to do request: %v", err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("fail to close request body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return portfolio, fmt.Errorf("fail to fetch portfolio. Status code: [%d]", resp.StatusCode)
@@ -67,7 +72,7 @@ func (api *Api) getPortfolio(accountId string) (Portfolio, error) {
 	return portfolio, nil
 }
 
-func (api *Api) GetIisPortfolio() (Portfolio, error) {
+func (api *Api) GetIISPortfolio() (Portfolio, error) {
 	if iisId, ok := api.accounts.IisAccountId(); ok {
 		return api.getPortfolio(iisId)
 	}

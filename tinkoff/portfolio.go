@@ -3,19 +3,18 @@ package tinkoff
 import (
 	"bytes"
 	"fmt"
-	"text/template"
 	"investbot/currency"
+	"text/template"
 )
 
-const PortfolioEndpoint = "https://api-invest.tinkoff.ru/openapi/portfolio"
-
 const (
+	PortfolioEndpoint    = "https://api-invest.tinkoff.ru/openapi/portfolio"
 	portfolioTemplateStr = `
 {{- range $i, $v := .Payload.Positions}}
 <u>{{.Name}}</u> <b>({{sign .ExpectedYield.Value}}</b> {{.ExpectedYield.Currency}})
 Баланс: {{.Balance}} {{if ne .InstrumentType "Currency"}}шт. на{{end}} {{formatFloat .TotalPositionPrice}} {{.AveragePositionPrice.Currency}}
 {{end}}
-<b>Итог: {{sign .TotalYieldRUB}} RUB</b>
+Портфель: {{formatFloat .TotalPortfolioPrice}} <b>({{sign .TotalYieldRUB}})</b> RUB.
 `
 )
 
@@ -48,7 +47,8 @@ var portfolioFuncMap = template.FuncMap{
 }
 
 type Portfolio struct {
-	TotalYieldRUB float64
+	TotalYieldRUB       float64
+	TotalPortfolioPrice float64
 
 	TrackingID string `json:"trackingId"`
 	Status     string `json:"status"`
@@ -99,12 +99,12 @@ func (portfolio *Portfolio) Prettify(converter currency.Converter) (string, erro
 
 		portfolio.TotalYieldRUB += v.ExpectedYield.Value * rate
 		portfolio.Payload.Positions[i].TotalPositionPrice = v.Balance*v.AveragePositionPrice.Value + v.ExpectedYield.Value
+		portfolio.TotalPortfolioPrice += portfolio.Payload.Positions[i].TotalPositionPrice * rate
 	}
 
 	buff := bytes.Buffer{}
 
-	err := portfolioTemplate.Execute(&buff, portfolio)
-	if err != nil {
+	if err := portfolioTemplate.Execute(&buff, portfolio); err != nil {
 		return "", fmt.Errorf("fail to execute tempalte: %v", err)
 	}
 
